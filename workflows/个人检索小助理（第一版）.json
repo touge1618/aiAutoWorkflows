@@ -1,0 +1,611 @@
+{
+  "name": "个人检索小助理（第一版）",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "value": "public",
+          "mode": "list",
+          "cachedResultName": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "feishu_event_log",
+          "mode": "name"
+        },
+        "where": {
+          "values": [
+            {
+              "column": "event_id",
+              "value": "={{ $json.body.header.event_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -2440,
+        650
+      ],
+      "id": "e02c9391-4859-42ca-81be-c0a7c80c5adf",
+      "name": "Select rows from a table",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "Xv9g4T6PgHH2comk",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "aeb0cc70-9ab4-413b-a5a2-93124199749b",
+              "leftValue": "={{$json}}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2220,
+        650
+      ],
+      "id": "37077f64-15c9-4b2c-bed0-cdaf6d652f2b",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -1930,
+        800
+      ],
+      "id": "3a249c9d-209e-461e-ab2b-d2700d7c9f40",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"challenge\": \"{{ $('Webhook').item.json.body.challenge }}\" }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -720,
+        500
+      ],
+      "id": "2ae93bd8-a4ba-4fdc-acbd-6a802a20124f",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "message:send",
+        "receive_id_type": "user_id",
+        "receive_id": "cf8g2263",
+        "content": "={\"text\":\"{{ $json.output.replaceAll('\\n',' ') }}\"}"
+      },
+      "type": "n8n-nodes-feishu-lite.feishuNode",
+      "typeVersion": 1,
+      "position": [
+        -940,
+        500
+      ],
+      "id": "4e7db548-1e37-44d3-8092-f6c218eb3c7e",
+      "name": "Message:send message1",
+      "credentials": {
+        "feishuCredentialsApi": {
+          "id": "5DYdsXtcanE0UqQ3",
+          "name": "Feishu Credentials account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.msg }}",
+        "options": {
+          "systemMessage": "你是我私人定制的记忆整理与检索助手，你会帮助我记住、整理并快速查找你在备忘录中随手记录的各种信息，包括但不限于数字、电话、临时笔记、待办事项等。请你必须到向量数据库Qdrant中查找"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -1400,
+        420
+      ],
+      "id": "aabd6ea3-e238-4a77-a855-1fd53635df83",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -1440,
+        600
+      ],
+      "id": "1d1a038e-8447-41af-b1ab-1b83b60405d0",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "WKYG0S5eXZQ7nArd",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "value": "public",
+          "mode": "list",
+          "cachedResultName": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "feishu_event_log",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "event_id": "={{ $('Webhook').item.json.body.header.event_id }}",
+            "event_type": "={{ $('Webhook').item.json.body.header.event_type }}",
+            "response_data": "={{$input.item.json.toJsonString()}}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "event_id",
+              "displayName": "event_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "received_at",
+              "displayName": "received_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "processed",
+              "displayName": "processed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "processed_at",
+              "displayName": "processed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "response_data",
+              "displayName": "response_data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "raw_data",
+              "displayName": "raw_data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -500,
+        500
+      ],
+      "id": "28ad3058-6a70-4f4c-8d86-9ce7be8a34d6",
+      "name": "Insert rows in a table1",
+      "credentials": {
+        "postgres": {
+          "id": "Xv9g4T6PgHH2comk",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -2020,
+        600
+      ],
+      "id": "fd5d574d-45ab-43fb-ac64-ad1dae96b11e",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "WKYG0S5eXZQ7nArd",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ JSON.parse($('Webhook').item.json.body.event.message.content).text}}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        -1860,
+        620
+      ],
+      "id": "37b5d2be-54f2-4344-b0ba-c91ce30bdb80",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "agent_768collection",
+          "mode": "list",
+          "cachedResultName": "agent_768collection"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.3,
+      "position": [
+        -2000,
+        400
+      ],
+      "id": "f2016dbf-c234-4b3a-a8dc-9d0375e9a8d1",
+      "name": "Qdrant Vector Store",
+      "credentials": {
+        "qdrantApi": {
+          "id": "mJw34rpOY704nKYr",
+          "name": "QdrantApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c9418469-044c-426f-8205-9a266a26850d",
+              "name": "msg",
+              "value": "= {{ JSON.parse($('Webhook').item.json.body.event.message.content).text}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1640,
+        500
+      ],
+      "id": "96818118-e1e7-4072-8aa3-f0eb1c8bd2c8",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "d3f17069-67f1-4269-b311-e0cf538dee23",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -2660,
+        650
+      ],
+      "id": "bf897a84-55d9-4763-aeb6-951875e8f5fc",
+      "name": "Webhook",
+      "webhookId": "d3f17069-67f1-4269-b311-e0cf538dee23"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Work with your data in a Qdrant collection",
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "agent_768collection",
+          "mode": "list",
+          "cachedResultName": "agent_768collection"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.3,
+      "position": [
+        -1020,
+        740
+      ],
+      "id": "6708bf8b-d788-44b2-bf1e-b81be6228091",
+      "name": "Qdrant Vector Store1",
+      "credentials": {
+        "qdrantApi": {
+          "id": "mJw34rpOY704nKYr",
+          "name": "QdrantApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Webhook').item.json.body.event.message.chat_id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        -1320,
+        600
+      ],
+      "id": "087aa5ee-3418-413e-abd6-371148b0e053",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "Xv9g4T6PgHH2comk",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Select rows from a table": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook1": {
+      "main": [
+        [
+          {
+            "node": "Insert rows in a table1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message:send message1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Message:send message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          },
+          {
+            "node": "Qdrant Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qdrant Vector Store": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Select rows from a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qdrant Vector Store1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7dd73f7c-3b4f-42a0-9076-9013c6284ac8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "87be16bec6efce82f93648115d99bd837c413a25dfefbe5e6de5e4c457b6a105"
+  },
+  "id": "dj0QOKKXlYBGqo1O",
+  "tags": [
+    {
+      "createdAt": "2025-07-19T10:13:31.798Z",
+      "updatedAt": "2025-07-19T10:13:31.798Z",
+      "id": "aZh32RwKcEpBHhkf",
+      "name": "toGit"
+    }
+  ]
+}

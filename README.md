@@ -17,7 +17,7 @@
 <a href="https://www.xiaohongshu.com/user/profile/61b5c44d0000000010004f68?xsec_token=YB1QiJAiI3nrbbsgf0Y4t9FIeXM-e77fMGhYWn27xWwZs%3D&xsec_source=app_share&xhsshare=CopyLink&appuid=61b5c44d0000000010004f68&apptime=1752499365&share_id=fec8d5af350245d7998d4b9cf9a015c5&share_channel=copy_link" target="_blank" style="margin-right: 20px;">                                                                                          
 <img src="img/redbook.png" alt="Xiaohongshu" width="150">                                                                                                                                              
 </a>                                                                                                                                                                                                     
-<a href="#" target="_blank">                                                                                                                               
+<a href="https://space.bilibili.com/3546614989850946" target="_blank">                                                                                                                               
 <img src="img/dili.png" alt="YouTube" width="150">                                                                                                                                                  
 </a>                                                                                                                                                                                                     
 </div>
