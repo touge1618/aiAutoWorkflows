@@ -1,0 +1,1275 @@
+{
+  "name": "YouTube&FeishuToHotTopic",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -5720,
+        -100
+      ],
+      "id": "8a0b319f-a9aa-4847-a465-f711767d869b",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -2680,
+        -60
+      ],
+      "id": "48bf073c-d512-415d-b749-eba6f3aad402",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Gqg0MhHu5lJjBZYz",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -940,
+        -280
+      ],
+      "id": "5069e2e6-0849-4d6b-9aa2-ad25c2f9332c",
+      "name": "Aggregate2"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1160,
+        -280
+      ],
+      "id": "f4876843-7d68-472b-b0a9-300892c82518",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -1820,
+        -280
+      ],
+      "id": "461bb5c2-d910-4adf-a329-ab6f21e01193",
+      "name": "Aggregate3"
+    },
+    {
+      "parameters": {
+        "resource": "doc",
+        "operation": "doc:create",
+        "title": "=解析({{ $(\"Limit\").item.json.title }})",
+        "folder_toke": "HW7Ofj8oflL4KadMS7ZcyeTQnjd"
+      },
+      "type": "n8n-nodes-feishu-lite.feishuNode",
+      "typeVersion": 1,
+      "position": [
+        -1600,
+        -180
+      ],
+      "id": "d2ec961e-3ca8-4180-b788-44d6da49660b",
+      "name": "创建文档1",
+      "credentials": {
+        "feishuCredentialsApi": {
+          "id": "FwH50D1NagIm5wt8",
+          "name": "Feishu Credentials account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "youtubeJieXi1"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        -2540,
+        -60
+      ],
+      "id": "4c911dca-2cd3-4c48-bc28-2c2dafca15ca",
+      "name": "Postgres Chat Memory1",
+      "credentials": {
+        "postgres": {
+          "id": "wefICFy0fJEHJSvN",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Loop over input $(\"baseData\").items and add a new field called 'myNewField' to the JSON of each one\nconst linkSuffix = $(\"baseData\").item.json.jso.link?.split(\"=\").pop() || \"unknown\";\n  const isoDatetamp = $(\"baseData\").item.json.jso.isoDate ? new Date($(\"baseData\").item.json.jso.isoDate).getTime() : Date.now();\n  const pubDatetamp = $(\"baseData\").item.json.jso.pubDate ? new Date($(\"baseData\").item.json.jso.pubDate).getTime() : Date.now();\n\n  const result = {\n  fields: {\n  id: $(\"baseData\").item.json.jso.creator + ` ### ${linkSuffix}`,\n  title: $(\"baseData\").item.json.jso.title || \"\",\n  link: {\n    \"link\": $(\"baseData\").item.json.jso.link,\n\t\"text\": $(\"baseData\").item.json.jso.link\n  },\n  image:  {\n    \"link\": $(\"baseData\").item.json.jso.enclosure.url,\n\t\"text\": $(\"baseData\").item.json.jso.enclosure.type\n  },\n  description: $(\"baseData\").item.json.jso.contentSnippet || \"\",\n  pubDate: isoDatetamp || pubDatetamp || \"\",\n  doc: {\n        link: \"https://spcovyqqng.feishu.cn/docx/\" + $(\"setDocId1\").item.json.document_id,\n        text: $(\"baseData\").item.json.jso.title || \"\"\n      }\n}\n};\n\n\nconst recordsJson = {\n  records: [result]\n};\n\nconst finalJson = {\n  recordsJson: recordsJson\n};\n\n\nreturn finalJson;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        -560
+      ],
+      "id": "1ecabd65-6835-4c27-9a18-722264874bb6",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        160,
+        -280
+      ],
+      "id": "6188589c-9938-4135-bda8-6baa15401dd9",
+      "name": "Aggregate5"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst finalJson = {\n  tokenJson: $input.first().json\n};\n\n\nreturn finalJson;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -280,
+        -180
+      ],
+      "id": "a1c5bd7b-f919-4979-8bbe-f6337ca4e52a",
+      "name": "Code5"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -60,
+        -280
+      ],
+      "id": "2a992563-45a1-43ad-8375-fa65cced19c8",
+      "name": "Merge6"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -2040,
+        -280
+      ],
+      "id": "56497580-ef60-400e-8a16-559e2e4dd50d",
+      "name": "Merge3"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "610b3548-b3f6-475b-bbb0-119a87c31693",
+              "name": "document_id",
+              "value": "={{ $json.data.document.document_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1380,
+        -180
+      ],
+      "id": "10cb64a2-c6e9-4afa-a9d8-c92682332f8a",
+      "name": "setDocId1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://tactiq-apps-prod.tactiq.io/transcript",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"videoUrl\": {{ $json.jso.link.toJsonString() }},\"langCode\":\"en\"}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -3300,
+        -260
+      ],
+      "id": "9ec7a155-af2b-43b7-8853-15f5ceb727ba",
+      "name": "获取YouTube字幕",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "content": "## 设置YouTube频道ID\n### https://rsshub.pseudoyu.com/youtube/channel/｛YouTube频道ID｝",
+        "height": 360,
+        "width": 220,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -5560,
+        -280
+      ],
+      "id": "5613266e-6552-43b9-887b-702f83155b16",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## 测试时可以调整输出数量\n### 默认输出全部",
+        "height": 360,
+        "width": 220,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -5320,
+        -280
+      ],
+      "id": "815ed2b2-8977-4195-8185-6bde4f0f8c6d",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const combinedText = $input.item.json.captions.map(c => c.text).join(' ');\n\nconst result = {\n  title: $input.item.json.title,\n  content: combinedText\n};\n\nreturn result"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2960,
+        -280
+      ],
+      "id": "f2d50ec6-d5db-4613-8f04-91f1c02cc6a7",
+      "name": "将字幕组合为段落"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.content }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "# Role：爆款科技视频内容选题生成专家\n## Background：\n用户已经掌握了一些热门视频的脚本素材，并意识到简单地模仿表面形式是不足以成功的。现在，用户希望你能扮演一个更深度的策略分析角色，通过解构成功的案例，提炼出可复制的、公式化的爆款方法论。用户的目标是从“知道什么火”升级到“知道为什么火，以及如何让下一个火”，从而建立一个稳定、可预测的内容生产体系。\n\n## Profile：\n- Language: 中文\n- Description: 一位精通爆款视频逆向工程与策略生成的专家，擅长分析现有成功案例，提炼其“病毒DNA”，并结合公式化框架，为科技内容创作者量产高质量、高潜力的视频选题。\n### Skills:\n- 脚本逆向工程: 能够逐帧逐句解构视频脚本，精准识别其钩子、节奏、价值点和情感共鸣点。\n- 爆款归因分析: 深刻理解并能准确归纳出视频成功的核心原因（如：解决了强痛点、制造了巨大反差、提供了极高信息差等）。\n- 创意公式应用: 熟练运用结构化公式（如用户提供的场景化公式）进行创意放大和选题衍生。\n- 多维选题评估: 能从内容类型、核心看点、延展性、爆款指数等多个维度对新选题进行全面评估。\n- AIGC工具整合: 了解如何将n8n、各类AI工具与内容创作结合，提出具有前瞻性和实用性的选题方向。\n## Goals:\n- 深入分析用户提供的热门视频脚本。\n- 基于分析结果和给定的创作公式，生成至少5个高度相关的全新爆款选题。\n- 为每一个新选题，填充所有指定维度的信息（爆款标题、内容类型、核心看点等）。\n- 总结出一套可供用户长期使用的、结合了案例分析与公式应用的“爆款选题策略”。\n- 确保所有选题都具备高度的可操作性和视觉化潜力。\n## Constrains:\n- 分析必须基于原文: 所有的“爆款成因”分析都必须有理有据，能从用户提供的脚本中找到原文支撑。\n- 公式应用不生搬硬套: 在使用场景化公式时，必须与分析出的“爆款基因”有机结合，而非机械替换词语，且允许你优化衍生。\n- 保持价值核心: 即使是标题党，内容本身也必须提供真实、有价值的信息，不能欺骗用户。\n- 数据驱动判断: “爆款指数”的评估需要有逻辑支撑，而非凭空感觉。\n- 输出严格按照规定格式，且不允许输出除了选题报告以外的其他内容。\n## Workflow:\n1. 第一步：脚本接收与解析： 你会首先请求您提供需要分析的“热门视频脚本”全文。\n2. 第二步：爆款成因深度分析： 你将从“目标用户、痛点、解决方案、爽点、金句”等角度，对脚本进行拆解，总结出其成功的核心逻辑（爆款成因）。\n3. 第三步：选题公式化生成： 你会将分析出的核心逻辑，代入这些场景化公式如：\na.[目标人群] + [具体任务] + [痛点] + [解决方案]\nb.用[XXX]+[XXX]，让[人群]+[动作]效率提升[数字]倍\nc.[行业]+自动化：[XXX]如何改写[具体场景]的游戏规则\nd.[XXX]踩坑实录：这个[常见错误]差点让我损失[损失类型]\n等等，进行批量化、高质量的选题衍生,当然不止于这些公式。\n4. 第四步：多维度信息填充： 你会为每个衍生的选题，按照您指定的格式，详细撰写其“爆款标题”、“内容类型”、“核心看点”、“延展性”、“开场三秒脚本”、“爆款指数”和“相关工具”。\n5. 第五步：按要求格式输出完整选题报告\n## OutputFormat:\n使用标准的Markdown格式输出\n### 一、爆款成因分析\n - 内容总结：该脚本讲述了什么内容\n - 核心用户痛点: 本脚本精准打击了哪类人群的哪个核心痛点？\n - 解决方案吸引力: 脚本提供的解决方案，其“爽点”在哪里？（是更高效？更省钱？还是更颠覆认知？）\n - 叙事节奏亮点: 脚本在开头、中间、结尾是如何设置钩子和反转的？\n - 金句/关键信息: 哪句话或哪个信息点是用户最可能记住并分享的？\n### 二、全新爆款选题\n  - 爆款标题: [使用场景化公式生成的标题]\n  - 内容类型: [教程类/揭秘类/评测类/故事类]\n  - 核心看点: [用1-2句话概括视频最精华、最吸引人的内容]\n  - 延展性: [这个选题是否可以做成一个系列？比如续集、不同行业应用等]\n  - 开场三秒脚本: [设计好的前三秒台词或画面，用于快速抓住用户]\n  - 爆款指数: [★★★★★]\n  - 相关工具: [n8n, ChatGPT, Suno, ...]\n\n## Initialization\n作为[Role]，使用中文与用户交流，你必须遵守上述[Constrains]，按照[Workflow]执行任务，并按照[OutputFormat]输出，且只输出[OutputFormat]中指定的内容，不允许输出其他内容。"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -2640,
+        -280
+      ],
+      "id": "8793177e-9cc1-466c-916c-14b5037ce0d0",
+      "name": "选题生成智能体",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n    \"app_id\": \"cli_a8d0d6d5cf7ed00d\",\n    \"app_secret\": \"iv1ZwBVravxhMQhhSvZCzbBqKUJzpMQ2\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2160,
+        -560
+      ],
+      "id": "b55a9bd3-0625-4f16-87f4-7bd6cef8bb09",
+      "name": "获取飞书Token"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://open.feishu.cn/open-apis/docx/v1/documents/blocks/convert",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.data[0].tenant_access_token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"content_type\": \"markdown\",\n    \"content\": {{$json.data[1].output.toJsonString()}}\n} ",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1380,
+        -640
+      ],
+      "id": "ca2bb856-e8ca-44cb-b333-fbcdba5f2154",
+      "name": "转换为文档块（飞书）",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "resource": "doc",
+        "operation": "doc:block:createDescendant",
+        "document_id": "={{ $json.data[0].document_id }}",
+        "block_id": "={{ $json.data[0].document_id }}",
+        "body": "={\n    \"index\": 0,\n    \"children_id\": {{ $json.data[1].body.data.first_level_block_ids.toJsonString() }},\n    \"descendants\": {{ $json.data[1].body.data.blocks.toJsonString() }}\n}"
+      },
+      "type": "n8n-nodes-feishu-lite.feishuNode",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        -280
+      ],
+      "id": "2f7705b9-02e1-456d-a34e-e8c4dd98ea45",
+      "name": "创建嵌套快",
+      "credentials": {
+        "feishuCredentialsApi": {
+          "id": "FwH50D1NagIm5wt8",
+          "name": "Feishu Credentials account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "bitable",
+        "operation": "bitable:parseUrl",
+        "url": "https://spcovyqqng.feishu.cn/base/SpPUbw2BmaSGOosw5hRcF1iRnzb?table=tblIoxu4QF2JEmrt&view=vewuJwCd1X"
+      },
+      "type": "n8n-nodes-feishu-lite.feishuNode",
+      "typeVersion": 1,
+      "position": [
+        -500,
+        -180
+      ],
+      "id": "23d94118-5239-40cc-88aa-373a9af29dd9",
+      "name": "解析多维表格",
+      "credentials": {
+        "feishuCredentialsApi": {
+          "id": "FwH50D1NagIm5wt8",
+          "name": "Feishu Credentials account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "bitable",
+        "operation": "bitable:table:record:batchAdd",
+        "app_toke": "={{ $json.data[1].tokenJson.app_token }}",
+        "table_id": "={{ $json.data[1].tokenJson.table_id }}",
+        "body": "={{JSON.stringify($json.data[0].recordsJson)}}"
+      },
+      "type": "n8n-nodes-feishu-lite.feishuNode",
+      "typeVersion": 1,
+      "position": [
+        380,
+        -140
+      ],
+      "id": "2b6246c9-269d-4590-8021-2ce4baa7d2bc",
+      "name": "批量新增多维表格",
+      "credentials": {
+        "feishuCredentialsApi": {
+          "id": "FwH50D1NagIm5wt8",
+          "name": "Feishu Credentials account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "maxItems": "={{$input.all().length}}"
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -5280,
+        -100
+      ],
+      "id": "68cffa01-a845-49d3-9b14-868aacf3677d",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "url": "=https://rsshub.pseudoyu.com/youtube/channel/UC2_fdqDpXBKdfUUr3cFN8lA",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -5500,
+        -100
+      ],
+      "id": "d0f5d380-06e3-41d6-b7d9-16cb98d39759",
+      "name": "RSS Read"
+    },
+    {
+      "parameters": {
+        "batchSize": "=1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -3820,
+        -140
+      ],
+      "id": "d6caf939-2945-4198-9340-22f1fbd3f02c",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "message:send",
+        "receive_id_type": "user_id",
+        "receive_id": "cf8g2223",
+        "content": "={\"text\":\"n8n Task completed - {{ $now.format('yyyy-MM-dd HH:mm:ss') }}\"}"
+      },
+      "type": "n8n-nodes-feishu-lite.feishuNode",
+      "typeVersion": 1,
+      "position": [
+        -3400,
+        -520
+      ],
+      "id": "9acd0ea4-00d1-4f12-b4b5-c6d6d949ebd8",
+      "name": "Feishu Node",
+      "credentials": {
+        "feishuCredentialsApi": {
+          "id": "FwH50D1NagIm5wt8",
+          "name": "Feishu Credentials account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -3580,
+        -520
+      ],
+      "id": "23a8a756-2c1b-448e-82f6-f5647b9e618a",
+      "name": "finallAgg"
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "youtube_parse_errors",
+          "mode": "list",
+          "cachedResultName": "youtube_parse_errors"
+        },
+        "returnAll": true,
+        "where": {
+          "values": [
+            {
+              "column": "resolved",
+              "value": "false"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -4740,
+        120
+      ],
+      "id": "3aba0844-dcf2-4485-8dd5-ed4f1aa05c92",
+      "name": "Postgres3",
+      "credentials": {
+        "postgres": {
+          "id": "wefICFy0fJEHJSvN",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "console.log($(\"fromLimitAgg\").all()[0].json.data)\nlet filtered = [];\nfiltered = $(\"fromLimitAgg\").all()[0].json.data.filter(item1 => {\n    for (const item2 of $input.all()) {\n       if (item1.link === item2.json.video_link) {\n         return true;\n       } \n    }\n   return false;\n  })\nreturn filtered;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4560,
+        120
+      ],
+      "id": "5794616b-d9e1-4a33-a943-564225d7e4b8",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -4900,
+        120
+      ],
+      "id": "b15fd1e8-33e2-4b65-b25d-03d2c6c93cf5",
+      "name": "fromLimitAgg"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7d78acac-d7f4-4fd9-b244-00ccf41e9b8f",
+              "name": "jso",
+              "value": "={{ $json }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -4200,
+        -140
+      ],
+      "id": "6a5c83ad-16ff-4f80-b405-88fe60bbed1d",
+      "name": "baseData"
+    },
+    {
+      "parameters": {
+        "content": "## 处理异常数据时走这路",
+        "height": 300,
+        "width": 560,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -4960,
+        0
+      ],
+      "id": "085226f5-e6d7-4f2d-a65e-bf188e4858b6",
+      "name": "Sticky Note12"
+    },
+    {
+      "parameters": {
+        "content": "## 处理新数据时走这路\n",
+        "height": 280,
+        "width": 560,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -4960,
+        -280
+      ],
+      "id": "6d871e01-8c97-4aa6-99b7-1b778c7ee6e8",
+      "name": "Sticky Note13"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -4740,
+        -180
+      ],
+      "id": "4df638d6-62ca-4f54-a9c3-0a6ffcbbf5d7",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "content": "# YouTube&Feishu内容创作选题AI智能体\n## 作者: 投哥不请自来（全平台账号同名，感谢关注） \n## YouTube： https://www.youtube.com/@touge1618\n## BiliBili: https://space.bilibili.com/3546614989850946\n## 抖音：https://www.douyin.com/user/MS4wLjABAAAAtIuGLfZIbAEB5XpXrMsqjJeWS-kGr2H-rrT0TJ-H9M0NiuVqD5_8QmH8staEwVzm\n## 小红书： https://www.xiaohongshu.com/user/profile/61b5c44d0000000010004f68\n## 微信（注明来意）：touge1618\n",
+        "height": 320,
+        "width": 1840,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -5760,
+        -620
+      ],
+      "id": "0ad469d9-cec4-4513-b196-e313b2e17e56",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "value": "public",
+          "mode": "list",
+          "cachedResultName": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "youtube_parse_errors",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "video_link": "={{ $(\"baseData\").item.json.jso.link }}",
+            "error_message": "={{$json.error.toJsonString()}}",
+            "author": "{{ $(\"baseData\").item.json.jso.author }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "video_link",
+              "displayName": "video_link",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "occurred_at",
+              "displayName": "occurred_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "retry_count",
+              "displayName": "retry_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "resolved",
+              "displayName": "resolved",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "author",
+              "displayName": "author",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1840,
+        500
+      ],
+      "id": "4b564087-996e-475f-bcb6-22ca2bf3ea03",
+      "name": "插入数据库",
+      "credentials": {
+        "postgres": {
+          "id": "wefICFy0fJEHJSvN",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": {
+          "__rl": true,
+          "value": "public",
+          "mode": "list",
+          "cachedResultName": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "youtube_parse_errors",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "video_link": "={{ $json.data.records[0].fields.link.link }}",
+            "resolved": true
+          },
+          "matchingColumns": [
+            "video_link"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "video_link",
+              "displayName": "video_link",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "occurred_at",
+              "displayName": "occurred_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "retry_count",
+              "displayName": "retry_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "resolved",
+              "displayName": "resolved",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1020,
+        160
+      ],
+      "id": "756b0012-ba4b-4dc8-85e2-2ae9c6a4b12f",
+      "name": "更新数据库",
+      "credentials": {
+        "postgres": {
+          "id": "wefICFy0fJEHJSvN",
+          "name": "Postgres account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "选题生成智能体",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate2": {
+      "main": [
+        [
+          {
+            "node": "创建嵌套快",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Aggregate2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate3": {
+      "main": [
+        [
+          {
+            "node": "转换为文档块（飞书）",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "创建文档1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "创建文档1": {
+      "main": [
+        [
+          {
+            "node": "setDocId1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory1": {
+      "ai_memory": [
+        [
+          {
+            "node": "选题生成智能体",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Merge6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate5": {
+      "main": [
+        [
+          {
+            "node": "批量新增多维表格",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code5": {
+      "main": [
+        [
+          {
+            "node": "Merge6",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge6": {
+      "main": [
+        [
+          {
+            "node": "Aggregate5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge3": {
+      "main": [
+        [
+          {
+            "node": "Aggregate3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "setDocId1": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "获取YouTube字幕": {
+      "main": [
+        [
+          {
+            "node": "将字幕组合为段落",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "插入数据库",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "将字幕组合为段落": {
+      "main": [
+        [
+          {
+            "node": "选题生成智能体",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "选题生成智能体": {
+      "main": [
+        [
+          {
+            "node": "获取飞书Token",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 1
+          }
+        ],
+        [
+          {
+            "node": "插入数据库",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "获取飞书Token": {
+      "main": [
+        [
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "转换为文档块（飞书）": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ],
+        [
+          {
+            "node": "插入数据库",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "创建嵌套快": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "解析多维表格",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "解析多维表格": {
+      "main": [
+        [
+          {
+            "node": "Code5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "批量新增多维表格": {
+      "main": [
+        [
+          {
+            "node": "更新数据库",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "finallAgg",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "获取YouTube字幕",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Feishu Node": {
+      "main": [
+        []
+      ]
+    },
+    "finallAgg": {
+      "main": [
+        [
+          {
+            "node": "Feishu Node",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres3": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "baseData",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "fromLimitAgg": {
+      "main": [
+        [
+          {
+            "node": "Postgres3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "baseData": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Operation, do nothing": {
+      "main": [
+        [
+          {
+            "node": "baseData",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "插入数据库": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "更新数据库": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "05e2db6f-bdf5-4e77-81c0-83c1ad6b306f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8eae764161ebbc52fe442e2e085e55e53ff4fb0382d403b392ddc865ac91716d"
+  },
+  "id": "Ruy3T7szJ8X2vmh6",
+  "tags": []
+}
