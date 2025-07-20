@@ -1,0 +1,1420 @@
+{
+  "name": "AI备忘录智能体V2.0",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "value": "public",
+          "mode": "list",
+          "cachedResultName": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "feishu_event_log",
+          "mode": "name"
+        },
+        "where": {
+          "values": [
+            {
+              "column": "event_id",
+              "value": "={{ $json.body.header.event_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -2940,
+        800
+      ],
+      "id": "9d2289b9-7b79-4c2d-aebf-9bb2b9bf0e42",
+      "name": "Select rows from a table",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "Xv9g4T6PgHH2comk",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "aeb0cc70-9ab4-413b-a5a2-93124199749b",
+              "leftValue": "={{$json}}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2720,
+        800
+      ],
+      "id": "ec59f476-1d22-4ffc-bc27-9cf5917a4ef5",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -2500,
+        900
+      ],
+      "id": "2b568bfc-74ff-4a15-8b46-6c22ad587d5b",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"challenge\": \"{{ $('Webhook').item.json.body.challenge }}\" }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        460,
+        500
+      ],
+      "id": "73c6ede9-9ec4-479c-bede-4211eb45c25d",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "message:send",
+        "receive_id_type": "user_id",
+        "receive_id": "cf8g2223",
+        "content": "={\"text\":\"{{ $json.content.replaceAll('\\n',' ') }}\"}"
+      },
+      "type": "n8n-nodes-feishu-lite.feishuNode",
+      "typeVersion": 1,
+      "position": [
+        240,
+        400
+      ],
+      "id": "017b72ce-bf96-4d77-ba69-819ae3c805b1",
+      "name": "Message:send message1",
+      "credentials": {
+        "feishuCredentialsApi": {
+          "id": "5JOH74o6j773a1Ro",
+          "name": "Feishu Credentials account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.msg }}",
+        "options": {
+          "systemMessage": "角色 (Role):\n你是一个专业的Qdrant向量数据库检索代理。\n目标 (Goal):\n你的任务是根据用户提供的检索要求，精确地从Qdrant向量数据库中获取相关内容，并以指定的JSON格式输出。\n约束与规则 (Constraints & Rules):\n输出格式 (Output Format): 严格遵循以下JSON数组结构，数组中包含多个固定对象，分别可能有文本、图片、文件内容。\n[{\"type\":\"text\",\"content\":\"\"},{\"type\":\"image\",\"content\":\"{image_key}\",\"message_id\":\"{message_id}\"},{\"type\":\"file\",\"content\":\"\"}]\ntype: 字符串，固定为 \"text\" 或 \"image\"。\ncontent: 字符串。如果检索到内容，则为相应的文本或图片的image_key；如果未检索到或不相关，则必须为空数组 \"\"。\n检索逻辑 (Retrieval Logic - Simulated):\n文本检索: 对于需要文本内容的请求，请生成最相关、最详细的文本摘要或片段，模拟从Qdrant检索到的结果。\n图片检索: 对于需要图片内容的请求，请生成最符合语义的图片的image_key，以及图片所在message_id，模拟从Qdrant检索到的结果\n混合检索: 如果用户要求同时检索文本和图片，你需要分别进行文本和图片的模拟检索，并合并到同一个JSON结构中。\n无结果处理: 如果你认为根据用户请求，Qdrant中不可能存在相关内容（例如，请求过于抽象、不合逻辑或超出常识），请返回空数组。\n输出纯净 (Pure Output): 除了最终的JSON字符串外，不要输出任何额外的信息、解释、对话或markdown代码块以外的内容。\n输入格式 (Input Format):\n用户会直接给出他们的检索要求，例如：\"帮我找一下关于AI伦理的最新文章\" 或 \"给我看看可爱的猫咪图片\"。\n示例 (Examples):\n用户输入 (User Input): 帮我找一下关于大语言模型发展历史的资料。\n预期输出 (Expected Output):\n[\n  {\"type\":\"text\",\"content\":\"大语言模型（LLMs）的发展始于早期的神经网络和自然语言处理研究。2017年Transformer模型的提出是关键转折点，解决了RNN和CNN在长序列处理上的局限。随后，BERT、GPT系列等模型的出现，通过预训练和微调范式，极大地提升了模型理解和生成自然语言的能力。近年来，模型规模持续扩大，训练数据量激增，涌现出如GPT-3、PaLM、Llama等具有强大通用能力和涌现能力的大模型，推动了AI在多个领域的应用突破。\"}\n]\n\n用户输入 (User Input): 查找巴黎埃菲尔铁塔的图片。\n预期输出 (Expected Output):\nGenerated json\n[{\"type\":\"image\",\"content\":\"img_v3_02o8_0bfc595c-849f-4000-9727-33361d15de5g\",\"message_id\":\"om_x100b484dc713e0a80ec6da789f9b204\"}\n]"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -1680,
+        300
+      ],
+      "id": "1caa3821-bdbb-48e9-b94d-11e3bc6cd109",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -1700,
+        520
+      ],
+      "id": "764e1fc1-248c-41f3-9fdc-e8545190b8d1",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "WKYG0S5eXZQ7nArd",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "value": "public",
+          "mode": "list",
+          "cachedResultName": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "feishu_event_log",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "event_id": "={{ $('Webhook').item.json.body.header.event_id }}",
+            "event_type": "={{ $('Webhook').item.json.body.header.event_type }}",
+            "response_data": "={{$input.item.json.toJsonString()}}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "event_id",
+              "displayName": "event_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "received_at",
+              "displayName": "received_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "processed",
+              "displayName": "processed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "processed_at",
+              "displayName": "processed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "response_data",
+              "displayName": "response_data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "raw_data",
+              "displayName": "raw_data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        680,
+        500
+      ],
+      "id": "6b4f1f6d-d867-438f-98ed-1075d35b440c",
+      "name": "Insert rows in a table1",
+      "credentials": {
+        "postgres": {
+          "id": "Xv9g4T6PgHH2comk",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/embedding-001"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -2260,
+        680
+      ],
+      "id": "69810df5-a9af-4d3c-8eb6-a942b45428e1",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "WKYG0S5eXZQ7nArd",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ JSON.parse($('Webhook').item.json.body.event.message.content).text}}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        -2060,
+        680
+      ],
+      "id": "d397de2c-4a43-43fe-92ae-82fe2b0d44c3",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "agent_768collection",
+          "mode": "list",
+          "cachedResultName": "agent_768collection"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.3,
+      "position": [
+        -2280,
+        400
+      ],
+      "id": "8f7794ed-025c-4315-a9ec-bb6d40c204fa",
+      "name": "Qdrant Vector Store",
+      "credentials": {
+        "qdrantApi": {
+          "id": "mJw34rpOY704nKYr",
+          "name": "QdrantApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c9418469-044c-426f-8205-9a266a26850d",
+              "name": "msg",
+              "value": "= {{ JSON.parse($('Webhook').item.json.body.event.message.content).text}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1920,
+        500
+      ],
+      "id": "7fb2d3cc-a1ef-49fb-a491-afceb4773810",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "7eb649e1-98ca-49d7-b99e-0cc1b498ce3f",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -3160,
+        800
+      ],
+      "id": "7c5eac28-0b8a-4154-b75c-5b162a577784",
+      "name": "Webhook",
+      "webhookId": "7eb649e1-98ca-49d7-b99e-0cc1b498ce3f"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Work with your data in a Qdrant collection",
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "agent_768collection",
+          "mode": "list",
+          "cachedResultName": "agent_768collection"
+        },
+        "topK": 100,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.3,
+      "position": [
+        -1580,
+        520
+      ],
+      "id": "9ffacb64-c840-4c48-a702-4fdc4e32e8ab",
+      "name": "Qdrant Vector Store1",
+      "credentials": {
+        "qdrantApi": {
+          "id": "mJw34rpOY704nKYr",
+          "name": "QdrantApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Webhook').item.json.body.event.message.message_type }}",
+                    "rightValue": "text",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "17655d28-b5b5-4e48-bf61-a1db74282a14"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "a586cccb-aa7e-48bf-b629-016cf6258812",
+                    "leftValue": "={{ $('Webhook').item.json.body.event.message.message_type }}",
+                    "rightValue": "image",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -2500,
+        700
+      ],
+      "id": "aba8d79c-1a64-442e-be8c-e86a5f4de691",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "modelName": "models/embedding-001"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -760,
+        1120
+      ],
+      "id": "c6eff8c2-806a-4a85-94c1-828d604df39f",
+      "name": "Embeddings Google Gemini1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "WKYG0S5eXZQ7nArd",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.candidates[0].content.parts[0].text }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "image_key",
+                "value": "={{ $('Webhook').item.json.body.event.message.content.parseJson().image_key }}"
+              },
+              {
+                "name": "create_time",
+                "value": "={{ $('Webhook').item.json.body.event.message.create_time }}"
+              },
+              {
+                "name": "message_type",
+                "value": "={{ $('Webhook').item.json.body.event.message.message_type }}"
+              },
+              {
+                "name": "=message_id",
+                "value": "={{ $('Webhook').item.json.body.event.message.message_id }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        -640,
+        1120
+      ],
+      "id": "b0d357e9-4070-405b-b2b3-d889ca36983d",
+      "name": "Default Data Loader1"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "agent_768collection",
+          "mode": "list",
+          "cachedResultName": "agent_768collection"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.3,
+      "position": [
+        -780,
+        900
+      ],
+      "id": "fa156e2f-1754-4a6d-9621-a1a89b1f4bea",
+      "name": "Qdrant Vector Store2",
+      "credentials": {
+        "qdrantApi": {
+          "id": "mJw34rpOY704nKYr",
+          "name": "QdrantApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        "authentication": "genericCredentialType",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-goog-api-key",
+              "value": "AIzaSyCZxxNg6hf0PLKAxQnPWN76L9FH9VGZb0o"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"contents\": [{\n      \"parts\":[\n          {\n              \"inline_data\": {\n              \"mime_type\":\"image/jpeg\",\n              \"data\": \"{{ $json.data }}\"\n              }\n          },\n          {\"text\": \"识别图片内容\"}\n      ]\n    }]\n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1000,
+        900
+      ],
+      "id": "0db8dbdb-e81c-4e96-b02f-344f33a5bb23",
+      "name": "图像识别"
+    },
+    {
+      "parameters": {
+        "operation": "binaryToPropery",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -1220,
+        900
+      ],
+      "id": "5a19463e-96c8-46d4-82b9-6057e35d3a7c",
+      "name": "img to B64"
+    },
+    {
+      "parameters": {
+        "url": "=https://open.feishu.cn/open-apis/im/v1/messages/{{ $('Webhook').item.json.body.event.message.message_id}}/resources/{{ $('Webhook').item.json.body.event.message.content.parseJson().image_key }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "=type",
+              "value": "={{ $('Webhook').item.json.body.event.message.message_type}}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.accessToken }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1570,
+        900
+      ],
+      "id": "76a170fe-0cf6-4ba1-9a1a-ba6004433e1e",
+      "name": "获取图像"
+    },
+    {
+      "parameters": {
+        "resource": "auth",
+        "operation": "auth:getAccessToken"
+      },
+      "type": "n8n-nodes-feishu-lite.feishuNode",
+      "typeVersion": 1,
+      "position": [
+        -1920,
+        900
+      ],
+      "id": "73c85ed0-4d63-4b52-9398-46da4093c310",
+      "name": "飞书认证",
+      "credentials": {
+        "feishuCredentialsApi": {
+          "id": "5JOH74o6j773a1Ro",
+          "name": "Feishu Credentials account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ccc89667-4ebc-4f42-82ca-1ff6b071209d",
+              "name": "result",
+              "value": "={{ JSON.parse($json.output.substring($json.output.indexOf(\"[\"),$json.output.indexOf(\"]\")+1))}}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1220,
+        500
+      ],
+      "id": "9e1646e9-3b0f-4885-95fc-9ea88610888e",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "result",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -1000,
+        500
+      ],
+      "id": "4c6b133f-b207-48f1-b44a-b030bf7a6258",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "text",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "b929d5d0-a35b-4e0f-8ea7-2258fa630949"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "21e36ef9-6693-4afd-9c94-9b14f0bd1b9a",
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "image",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -710,
+        500
+      ],
+      "id": "16286c92-b2da-42cf-87fe-cb947cff34ee",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "message:send",
+        "receive_id_type": "user_id",
+        "receive_id": "cf8g2223",
+        "msg_type": "image",
+        "content": "={\"image_key\":\"{{ $json.data.image_key }}\"}"
+      },
+      "type": "n8n-nodes-feishu-lite.feishuNode",
+      "typeVersion": 1,
+      "position": [
+        240,
+        600
+      ],
+      "id": "cc064ed4-c74a-421f-a404-634a72c36ab7",
+      "name": "Message:send message",
+      "credentials": {
+        "feishuCredentialsApi": {
+          "id": "5JOH74o6j773a1Ro",
+          "name": "Feishu Credentials account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://open.feishu.cn/open-apis/im/v1/messages/{{ $('Switch1').item.json.message_id}}/resources/{{ $('Switch1').item.json.content }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "=type",
+              "value": "={{ $('Switch1').item.json.type }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.accessToken }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -200,
+        600
+      ],
+      "id": "1c74ae1f-195c-49cd-9dc3-5d511b120172",
+      "name": "获取图像1"
+    },
+    {
+      "parameters": {
+        "resource": "auth",
+        "operation": "auth:getAccessToken"
+      },
+      "type": "n8n-nodes-feishu-lite.feishuNode",
+      "typeVersion": 1,
+      "position": [
+        -420,
+        600
+      ],
+      "id": "0fffd73b-8564-43b9-9f35-21fc9a8b3ad3",
+      "name": "飞书认证1",
+      "credentials": {
+        "feishuCredentialsApi": {
+          "id": "5JOH74o6j773a1Ro",
+          "name": "Feishu Credentials account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://open.feishu.cn/open-apis/im/v1/images",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('飞书认证1').item.json.accessToken }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "multipart/form-data"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "image_type",
+              "value": "message"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "image",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        20,
+        600
+      ],
+      "id": "3e562071-5465-4a2a-9d79-1a2a2eb9f593",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "message:send",
+        "receive_id_type": "user_id",
+        "receive_id": "cf8g2223",
+        "content": "={\"text\":\"好的，图片已经帮您存起来了！\"}"
+      },
+      "type": "n8n-nodes-feishu-lite.feishuNode",
+      "typeVersion": 1,
+      "position": [
+        -420,
+        900
+      ],
+      "id": "fff0698d-906f-4918-ad8e-136f2e7516a0",
+      "name": "Message:send message3",
+      "credentials": {
+        "feishuCredentialsApi": {
+          "id": "5JOH74o6j773a1Ro",
+          "name": "Feishu Credentials account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "value": "public",
+          "mode": "list",
+          "cachedResultName": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "feishu_event_log",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "event_id": "={{ $('Webhook').item.json.body.header.event_id }}",
+            "event_type": "={{ $('Webhook').item.json.body.header.event_type }}",
+            "response_data": "={{$input.item.json.toJsonString()}}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "event_id",
+              "displayName": "event_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "received_at",
+              "displayName": "received_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "processed",
+              "displayName": "processed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "processed_at",
+              "displayName": "processed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "response_data",
+              "displayName": "response_data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "raw_data",
+              "displayName": "raw_data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -2210,
+        900
+      ],
+      "id": "48e612ad-51ce-4d37-9b62-e7ad9b5e316d",
+      "name": "Insert rows in a table",
+      "credentials": {
+        "postgres": {
+          "id": "Xv9g4T6PgHH2comk",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"challenge\": \"{{ $('Webhook').item.json.body.challenge }}\" }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -200,
+        900
+      ],
+      "id": "395f2fd4-acf1-416b-ba0f-6bbadb475ff4",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "content": "# AI备忘录智能体V2.0 （文字检索+图像识别）\n## 作者: 投哥不请自来（全平台账号同名，感谢关注） \n## YouTube： https://www.youtube.com/@touge1618\n## BiliBili: https://space.bilibili.com/3546614989850946\n## 抖音：https://www.douyin.com/user/MS4wLjABAAAAtIuGLfZIbAEB5XpXrMsqjJeWS-kGr2H-rrT0TJ-H9M0NiuVqD5_8QmH8staEwVzm\n## 小红书： https://www.xiaohongshu.com/user/profile/61b5c44d0000000010004f68\n## 微信（注明来意）：touge1618\n",
+        "height": 340,
+        "width": 1840,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -3180,
+        -100
+      ],
+      "id": "c6c3410d-82ff-4aee-afa9-1356993ce7e4",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Select rows from a table": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook1": {
+      "main": [
+        [
+          {
+            "node": "Insert rows in a table1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message:send message1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          },
+          {
+            "node": "Qdrant Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qdrant Vector Store": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Select rows from a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qdrant Vector Store1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Insert rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Operation, do nothing": {
+      "main": [
+        []
+      ]
+    },
+    "Embeddings Google Gemini1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Qdrant Vector Store2",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader1": {
+      "ai_document": [
+        [
+          {
+            "node": "Qdrant Vector Store2",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "图像识别": {
+      "main": [
+        [
+          {
+            "node": "Qdrant Vector Store2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "img to B64": {
+      "main": [
+        [
+          {
+            "node": "图像识别",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "获取图像": {
+      "main": [
+        [
+          {
+            "node": "img to B64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "飞书认证": {
+      "main": [
+        [
+          {
+            "node": "获取图像",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "Message:send message1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "飞书认证1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "飞书认证1": {
+      "main": [
+        [
+          {
+            "node": "获取图像1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "获取图像1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Message:send message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message:send message": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qdrant Vector Store2": {
+      "main": [
+        [
+          {
+            "node": "Message:send message3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message:send message3": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert rows in a table": {
+      "main": [
+        [
+          {
+            "node": "飞书认证",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "46ffd315-91b4-4b80-8a77-60af8275f84d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "87be16bec6efce82f93648115d99bd837c413a25dfefbe5e6de5e4c457b6a105"
+  },
+  "id": "bAcf1M76bVEtoAL6",
+  "tags": []
+}
